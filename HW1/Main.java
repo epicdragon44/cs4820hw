@@ -12,12 +12,16 @@ import java.util.LinkedList;
 class Main {
 
     /**
-     * Helper method to convert a string[] to an int[]
+     * Helper method to convert a string[] to an int[] with optional convertIndices during conversion (decrement from 1-indexed to 0-indexed)
      */
-    public static int[] toIntArray(String[] stringArray) {
+    public static int[] toIntArray(String[] stringArray, boolean convertIndices) {
         int[] intArray = new int[stringArray.length];
         for (int i = 0; i < stringArray.length; i++) {
-            intArray[i] = Integer.parseInt(stringArray[i]);
+            if (convertIndices) {
+                intArray[i] = Integer.parseInt(stringArray[i]) - 1;
+            } else {
+                intArray[i] = Integer.parseInt(stringArray[i]);
+            }
         }
         return intArray;
     }
@@ -27,7 +31,7 @@ class Main {
      * and returning an int[] of the next line of input.
      */
     public static int[] readIntArray(BufferedReader br) throws IOException {
-        return toIntArray(br.readLine().split(" "));
+        return toIntArray(br.readLine().split(" "), false);
     }
 
     /**
@@ -37,12 +41,7 @@ class Main {
      * If you pass in a boolean `convertIndices`, it also converts from the 1-indexed input to the 0-indexed array we use internally!
      */
     public static int[] readIntArray(BufferedReader br, boolean convertIndices) throws IOException {
-        String[] stringArray = br.readLine().split(" ");
-        int[] intArray = toIntArray(stringArray);
-        for (int i = 0; i < intArray.length; i++) {
-            intArray[i]--;
-        }
-        return intArray;
+        return toIntArray(br.readLine().split(" "), true);
     }
 
     /**
@@ -69,11 +68,12 @@ class Main {
         int[][] hosPref = new int[m][n];
 
         /**
-         * Hold students preferences for hospitals as a 2D array
-         * where stuPref[n][i] denotes the ith hospital on student n's preference list
-         * essentially, stuPref[n] is the preference list for student n, ordered from most to least preferred
+         * Goal: we want to compare the rank of a hospital in a student's preference list to the rank of the hospital that student is currently matched to in constant time.
+         * To do this, we create a 2D array of the ranks of each hospital in each student's preference list,
+         * where ranking[w][m] is the rank of hospital m in student w's preference list
+         * Thus, to decide whether hospital m or m' is a better match for student w, we can simply compare ranking[w][m] and ranking[w][m'] and take the lower one
          */
-        int[][] stuPref = new int[n][m];
+        int[][] ranking = new int[n][m];
 
         /**
          * Hold hospitals that are free as a LinkedList 
@@ -113,28 +113,16 @@ class Main {
             }
         }
 
-        // Populate hosPref and stuPref
+        // Populate hosPref
         for (int hosID = 0; hosID < m; hosID++) {
             hosPref[hosID] = readIntArray(br, true);
         }
+
+        // Populate ranking: for each student, populate the rank of each hospital in their preference list
         for (int stuID = 0; stuID < n; stuID++) {
-            stuPref[stuID] = readIntArray(br, true);
-        }
-
-        // -- Create and populate pre-processed data structures --
-
-        /**
-         * Goal: we want to compare the rank of a hospital in a student's preference list to the rank of the hospital that student is currently matched to in constant time.
-         * To do this, we create a 2D array of the ranks of each hospital in each student's preference list,
-         * where ranking[w][m] is the rank of hospital m in student w's preference list
-         * Thus, to decide whether hospital m or m' is a better match for student w, we can simply compare ranking[w][m] and ranking[w][m'] and take the lower one
-         */
-        int[][] ranking = new int[n][m];
-
-        // Populate ranking
-        for (int stuID = 0; stuID < n; stuID++) {
-            for (int i = 0; i < m; i++) {
-                ranking[stuID][stuPref[stuID][i]] = i;
+            int[] stuPref = readIntArray(br, true);
+            for (int i = 0; i < stuPref.length; i++) {
+                ranking[stuID][stuPref[i]] = i;
             }
         }
 
